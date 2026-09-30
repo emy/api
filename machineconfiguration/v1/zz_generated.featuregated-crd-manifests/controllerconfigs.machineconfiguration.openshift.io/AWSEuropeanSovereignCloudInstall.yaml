@@ -1874,10 +1874,6 @@ spec:
                                   rule: (has(self.state) == has(oldSelf.state)) ||
                                     (!has(oldSelf.state) && self.state != "External")
                             type: object
-                            x-kubernetes-validations:
-                            - message: cloudControllerManager may not be added or
-                                removed once set
-                              rule: has(self.cloudControllerManager) == has(oldSelf.cloudControllerManager)
                           gcp:
                             description: gcp contains settings specific to the Google
                               Cloud Platform infrastructure provider.

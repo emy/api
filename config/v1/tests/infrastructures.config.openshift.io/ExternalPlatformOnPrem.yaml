@@ -1,0 +1,185 @@
+apiVersion: apiextensions.k8s.io/v1 # Hack because controller-gen complains if we don't have this
+name: "ExternalPlatformOnPrem Infrastructure"
+crdName: infrastructures.config.openshift.io
+featureGates:
+- ExternalPlatformOnPrem
+tests:
+  onUpdate:
+    - name: Should allow setting on-prem VIPs and OpenShiftManagedDefault loadBalancer on External
+      initial: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external: {}
+            type: External
+      updated: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external: {}
+            type: External
+        status:
+          platform: External
+          platformStatus:
+            external:
+              apiServerInternalIPs:
+              - 192.168.1.1
+              ingressIPs:
+              - 192.168.1.2
+              loadBalancer:
+                type: OpenShiftManagedDefault
+            type: External
+      expected: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external:
+              platformName: Unknown
+            type: External
+        status:
+          platform: External
+          platformStatus:
+            external:
+              apiServerInternalIPs:
+              - 192.168.1.1
+              ingressIPs:
+              - 192.168.1.2
+              loadBalancer:
+                type: OpenShiftManagedDefault
+            type: External
+          cpuPartitioning: None
+          infrastructureTopology: HighlyAvailable
+          controlPlaneTopology: HighlyAvailable
+    - name: Should allow setting dnsRecordsType to External with UserManaged loadBalancer (External)
+      initial: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external: {}
+            type: External
+      updated: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external: {}
+            type: External
+        status:
+          platform: External
+          platformStatus:
+            external:
+              dnsRecordsType: External
+              loadBalancer:
+                type: UserManaged
+            type: External
+      expected: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external:
+              platformName: Unknown
+            type: External
+        status:
+          platform: External
+          platformStatus:
+            external:
+              dnsRecordsType: External
+              loadBalancer:
+                type: UserManaged
+            type: External
+          cpuPartitioning: None
+          infrastructureTopology: HighlyAvailable
+          controlPlaneTopology: HighlyAvailable
+    - name: Should reject setting dnsRecordsType to External with OpenShiftManagedDefault loadBalancer (External)
+      initial: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external: {}
+            type: External
+      updated: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external: {}
+            type: External
+        status:
+          platform: External
+          platformStatus:
+            external:
+              dnsRecordsType: External
+              loadBalancer:
+                type: OpenShiftManagedDefault
+            type: External
+      expectedStatusError: "status.platformStatus.external: Invalid value: \"object\": dnsRecordsType may only be set to External when loadBalancer.type is UserManaged"
+    - name: Should allow setting dnsRecordsType to Internal with any loadBalancer type (External)
+      initial: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external: {}
+            type: External
+      updated: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external: {}
+            type: External
+        status:
+          platform: External
+          platformStatus:
+            external:
+              dnsRecordsType: Internal
+              loadBalancer:
+                type: OpenShiftManagedDefault
+            type: External
+      expected: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external:
+              platformName: Unknown
+            type: External
+        status:
+          platform: External
+          platformStatus:
+            external:
+              dnsRecordsType: Internal
+              loadBalancer:
+                type: OpenShiftManagedDefault
+            type: External
+          cpuPartitioning: None
+          infrastructureTopology: HighlyAvailable
+          controlPlaneTopology: HighlyAvailable
+    - name: Should not allow setting the dnsRecordsType to a wrong value (External)
+      initial: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external: {}
+            type: External
+      updated: |
+        apiVersion: config.openshift.io/v1
+        kind: Infrastructure
+        spec:
+          platformSpec:
+            external: {}
+            type: External
+        status:
+          platform: External
+          platformStatus:
+            external:
+              dnsRecordsType: Invalid
+            type: External
+      expectedStatusError: "platformStatus.external.dnsRecordsType: Unsupported value: \"Invalid\": supported values: \"Internal\", \"External\""

@@ -925,6 +925,15 @@ var (
 						enable(inDevPreviewNoUpgrade()).
 						mustRegister()
 
+	FeatureGateExternalPlatformOnPrem = newFeatureGate("ExternalPlatformOnPrem").
+						reportProblemsToJiraComponent("Networking / On-Prem Networking").
+						contactPerson("edesch").
+						productScope(ocpSpecific).
+		// TODO(OPNET-771): replace with the real External on-prem networking enhancement PR before merge.
+		enhancementPR("https://github.com/openshift/enhancements/pull/0000").
+		enable(inTechPreviewNoUpgrade(), inDevPreviewNoUpgrade()).
+		mustRegister()
+
 	FeatureGateProvisioningRequestAvailable = newFeatureGate("ProvisioningRequestAvailable").
 						reportProblemsToJiraComponent("Cluster Autoscaler").
 						contactPerson("elmiko").

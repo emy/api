@@ -226,6 +226,9 @@
                         "name": "ExternalOIDCWithUpstreamParity"
                     },
                     {
+                        "name": "ExternalPlatformOnPrem"
+                    },
+                    {
                         "name": "ExternalSnapshotMetadata"
                     },
                     {

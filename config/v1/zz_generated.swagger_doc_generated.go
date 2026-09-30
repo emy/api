@@ -1756,6 +1756,15 @@ func (EquinixMetalPlatformStatus) SwaggerDoc() map[string]string {
 	return map_EquinixMetalPlatformStatus
 }
 
+var map_ExternalPlatformLoadBalancer = map[string]string{
+	"":     "ExternalPlatformLoadBalancer defines the load balancer used by the cluster on External platform.",
+	"type": "type defines the type of load balancer used by the cluster on External platform which can be a user-managed or openshift-managed load balancer that is to be used for the OpenShift API and Ingress endpoints. When set to OpenShiftManagedDefault the static pods in charge of API and Ingress traffic load-balancing defined in the machine config operator will be deployed. When set to UserManaged these static pods will not be deployed and it is expected that the load balancer is configured out of band by the deployer. When omitted, this means no opinion and the platform is left to choose a reasonable default. The default value is OpenShiftManagedDefault.",
+}
+
+func (ExternalPlatformLoadBalancer) SwaggerDoc() map[string]string {
+	return map_ExternalPlatformLoadBalancer
+}
+
 var map_ExternalPlatformSpec = map[string]string{
 	"":             "ExternalPlatformSpec holds the desired state for the generic External infrastructure provider.",
 	"platformName": "platformName holds the arbitrary string representing the infrastructure provider name, expected to be set at the installation time. This field is solely for informational and reporting purposes and is not expected to be used for decision-making.",
@@ -1768,6 +1777,11 @@ func (ExternalPlatformSpec) SwaggerDoc() map[string]string {
 var map_ExternalPlatformStatus = map[string]string{
 	"":                       "ExternalPlatformStatus holds the current status of the generic External infrastructure provider.",
 	"cloudControllerManager": "cloudControllerManager contains settings specific to the external Cloud Controller Manager (a.k.a. CCM or CPI). When omitted, new nodes will be not tainted and no extra initialization from the cloud controller manager is expected.",
+	"apiServerInternalIPs":   "apiServerInternalIPs are the IP addresses to contact the Kubernetes API server that can be used by components inside the cluster, like kubelets using the infrastructure rather than Kubernetes networking. These are the IPs for a self-hosted load balancer in front of the API servers. In dual stack clusters this list contains two IPs otherwise only one.",
+	"ingressIPs":             "ingressIPs are the external IPs which route to the default ingress controller. The IPs are suitable targets of a wildcard DNS record used to resolve default route host names. In dual stack clusters this list contains two IPs otherwise only one.",
+	"loadBalancer":           "loadBalancer defines how the load balancer used by the cluster is configured.",
+	"dnsRecordsType":         "dnsRecordsType determines whether records for api, api-int, and ingress are provided by the internal DNS service or externally. Allowed values are `Internal`, `External`, and omitted. When set to `Internal`, records are provided by the internal infrastructure and no additional user configuration is required for the cluster to function. When set to `External`, records are not provided by the internal infrastructure and must be configured by the user on a DNS server outside the cluster. Cluster nodes must use this external server for their upstream DNS requests. This value may only be set when loadBalancer.type is set to UserManaged. When omitted, this means the user has no opinion and the platform is left to choose reasonable defaults. These defaults are subject to change over time. The current default is `Internal`.",
+	"machineNetworks":        "machineNetworks are IP networks used to connect all the OpenShift cluster nodes.",
 }
 
 func (ExternalPlatformStatus) SwaggerDoc() map[string]string {

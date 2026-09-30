@@ -141,6 +141,9 @@
                         "name": "ExternalOIDCExternalClaimsSourcing"
                     },
                     {
+                        "name": "ExternalPlatformOnPrem"
+                    },
+                    {
                         "name": "ExternalSnapshotMetadata"
                     },
                     {

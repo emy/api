@@ -1818,6 +1818,25 @@ spec:
                     description: external contains settings specific to the generic
                       External infrastructure provider.
                     properties:
+                      apiServerInternalIPs:
+                        description: |-
+                          apiServerInternalIPs are the IP addresses to contact the Kubernetes API
+                          server that can be used by components inside the cluster, like kubelets
+                          using the infrastructure rather than Kubernetes networking. These are the
+                          IPs for a self-hosted load balancer in front of the API servers. In dual
+                          stack clusters this list contains two IPs otherwise only one.
+                        format: ip
+                        items:
+                          type: string
+                        maxItems: 2
+                        type: array
+                        x-kubernetes-list-type: atomic
+                        x-kubernetes-validations:
+                        - message: apiServerInternalIPs must contain at most one IPv4
+                            address and at most one IPv6 address
+                          rule: 'self == oldSelf || (size(self) == 2 && isIP(self[0])
+                            && isIP(self[1]) ? ip(self[0]).family() != ip(self[1]).family()
+                            : true)'
                       cloudControllerManager:
                         description: |-
                           cloudControllerManager contains settings specific to the external Cloud Controller Manager (a.k.a. CCM or CPI).
@@ -1848,11 +1867,94 @@ spec:
                         - message: state may not be added or removed once set
                           rule: (has(self.state) == has(oldSelf.state)) || (!has(oldSelf.state)
                             && self.state != "External")
+                      dnsRecordsType:
+                        description: |-
+                          dnsRecordsType determines whether records for api, api-int, and ingress
+                          are provided by the internal DNS service or externally.
+                          Allowed values are `Internal`, `External`, and omitted.
+                          When set to `Internal`, records are provided by the internal infrastructure and
+                          no additional user configuration is required for the cluster to function.
+                          When set to `External`, records are not provided by the internal infrastructure
+                          and must be configured by the user on a DNS server outside the cluster.
+                          Cluster nodes must use this external server for their upstream DNS requests.
+                          This value may only be set when loadBalancer.type is set to UserManaged.
+                          When omitted, this means the user has no opinion and the platform is left
+                          to choose reasonable defaults. These defaults are subject to change over time.
+                          The current default is `Internal`.
+                        enum:
+                        - Internal
+                        - External
+                        type: string
+                      ingressIPs:
+                        description: |-
+                          ingressIPs are the external IPs which route to the default ingress
+                          controller. The IPs are suitable targets of a wildcard DNS record used to
+                          resolve default route host names. In dual stack clusters this list
+                          contains two IPs otherwise only one.
+                        format: ip
+                        items:
+                          type: string
+                        maxItems: 2
+                        type: array
+                        x-kubernetes-list-type: atomic
+                        x-kubernetes-validations:
+                        - message: ingressIPs must contain at most one IPv4 address
+                            and at most one IPv6 address
+                          rule: 'self == oldSelf || (size(self) == 2 && isIP(self[0])
+                            && isIP(self[1]) ? ip(self[0]).family() != ip(self[1]).family()
+                            : true)'
+                      loadBalancer:
+                        default:
+                          type: OpenShiftManagedDefault
+                        description: loadBalancer defines how the load balancer used
+                          by the cluster is configured.
+                        properties:
+                          type:
+                            default: OpenShiftManagedDefault
+                            description: |-
+                              type defines the type of load balancer used by the cluster on External platform
+                              which can be a user-managed or openshift-managed load balancer
+                              that is to be used for the OpenShift API and Ingress endpoints.
+                              When set to OpenShiftManagedDefault the static pods in charge of API and Ingress traffic load-balancing
+                              defined in the machine config operator will be deployed.
+                              When set to UserManaged these static pods will not be deployed and it is expected that
+                              the load balancer is configured out of band by the deployer.
+                              When omitted, this means no opinion and the platform is left to choose a reasonable default.
+                              The default value is OpenShiftManagedDefault.
+                            enum:
+                            - OpenShiftManagedDefault
+                            - UserManaged
+                            type: string
+                            x-kubernetes-validations:
+                            - message: type is immutable once set
+                              rule: oldSelf == '' || self == oldSelf
+                        type: object
+                      machineNetworks:
+                        description: machineNetworks are IP networks used to connect
+                          all the OpenShift cluster nodes.
+                        items:
+                          description: CIDR is an IP address range in CIDR notation
+                            (for example, "10.0.0.0/8" or "fd00::/8").
+                          maxLength: 43
+                          minLength: 1
+                          type: string
+                          x-kubernetes-validations:
+                          - message: value must be a valid CIDR network address
+                            rule: isCIDR(self)
+                        maxItems: 32
+                        type: array
+                        x-kubernetes-list-type: atomic
+                        x-kubernetes-validations:
+                        - rule: self.all(x, self.exists_one(y, x == y))
                     type: object
                     x-kubernetes-validations:
                     - message: cloudControllerManager may not be added or removed
                         once set
                       rule: has(self.cloudControllerManager) == has(oldSelf.cloudControllerManager)
+                    - message: dnsRecordsType may only be set to External when loadBalancer.type
+                        is UserManaged
+                      rule: '!has(self.dnsRecordsType) || self.dnsRecordsType == ''Internal''
+                        || (has(self.loadBalancer) && self.loadBalancer.type == ''UserManaged'')'
                   gcp:
                     description: gcp contains settings specific to the Google Cloud
                       Platform infrastructure provider.

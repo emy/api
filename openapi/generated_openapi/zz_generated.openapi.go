@@ -299,6 +299,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		configv1.ExternalClaimsSource{}.OpenAPIModelName():                                     schema_openshift_api_config_v1_ExternalClaimsSource(ref),
 		configv1.ExternalIPConfig{}.OpenAPIModelName():                                         schema_openshift_api_config_v1_ExternalIPConfig(ref),
 		configv1.ExternalIPPolicy{}.OpenAPIModelName():                                         schema_openshift_api_config_v1_ExternalIPPolicy(ref),
+		configv1.ExternalPlatformLoadBalancer{}.OpenAPIModelName():                             schema_openshift_api_config_v1_ExternalPlatformLoadBalancer(ref),
 		configv1.ExternalPlatformSpec{}.OpenAPIModelName():                                     schema_openshift_api_config_v1_ExternalPlatformSpec(ref),
 		configv1.ExternalPlatformStatus{}.OpenAPIModelName():                                   schema_openshift_api_config_v1_ExternalPlatformStatus(ref),
 		configv1.ExternalSourceAuthentication{}.OpenAPIModelName():                             schema_openshift_api_config_v1_ExternalSourceAuthentication(ref),
@@ -13513,6 +13514,37 @@ func schema_openshift_api_config_v1_ExternalIPPolicy(ref common.ReferenceCallbac
 	}
 }
 
+func schema_openshift_api_config_v1_ExternalPlatformLoadBalancer(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ExternalPlatformLoadBalancer defines the load balancer used by the cluster on External platform.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "type defines the type of load balancer used by the cluster on External platform which can be a user-managed or openshift-managed load balancer that is to be used for the OpenShift API and Ingress endpoints. When set to OpenShiftManagedDefault the static pods in charge of API and Ingress traffic load-balancing defined in the machine config operator will be deployed. When set to UserManaged these static pods will not be deployed and it is expected that the load balancer is configured out of band by the deployer. When omitted, this means no opinion and the platform is left to choose a reasonable default. The default value is OpenShiftManagedDefault.",
+							Default:     "OpenShiftManagedDefault",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+			VendorExtensible: spec.VendorExtensible{
+				Extensions: spec.Extensions{
+					"x-kubernetes-unions": []interface{}{
+						map[string]interface{}{
+							"discriminator":            "type",
+							"fields-to-discriminateBy": map[string]interface{}{},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_openshift_api_config_v1_ExternalPlatformSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -13548,11 +13580,86 @@ func schema_openshift_api_config_v1_ExternalPlatformStatus(ref common.ReferenceC
 							Ref:         ref(configv1.CloudControllerManagerStatus{}.OpenAPIModelName()),
 						},
 					},
+					"apiServerInternalIPs": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "apiServerInternalIPs are the IP addresses to contact the Kubernetes API server that can be used by components inside the cluster, like kubelets using the infrastructure rather than Kubernetes networking. These are the IPs for a self-hosted load balancer in front of the API servers. In dual stack clusters this list contains two IPs otherwise only one.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"ingressIPs": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "ingressIPs are the external IPs which route to the default ingress controller. The IPs are suitable targets of a wildcard DNS record used to resolve default route host names. In dual stack clusters this list contains two IPs otherwise only one.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"loadBalancer": {
+						SchemaProps: spec.SchemaProps{
+							Description: "loadBalancer defines how the load balancer used by the cluster is configured.",
+							Default:     map[string]interface{}{"type": "OpenShiftManagedDefault"},
+							Ref:         ref(configv1.ExternalPlatformLoadBalancer{}.OpenAPIModelName()),
+						},
+					},
+					"dnsRecordsType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "dnsRecordsType determines whether records for api, api-int, and ingress are provided by the internal DNS service or externally. Allowed values are `Internal`, `External`, and omitted. When set to `Internal`, records are provided by the internal infrastructure and no additional user configuration is required for the cluster to function. When set to `External`, records are not provided by the internal infrastructure and must be configured by the user on a DNS server outside the cluster. Cluster nodes must use this external server for their upstream DNS requests. This value may only be set when loadBalancer.type is set to UserManaged. When omitted, this means the user has no opinion and the platform is left to choose reasonable defaults. These defaults are subject to change over time. The current default is `Internal`.\n\nPossible enum values:\n - `\"External\"`\n - `\"Internal\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"External", "Internal"},
+						},
+					},
+					"machineNetworks": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "machineNetworks are IP networks used to connect all the OpenShift cluster nodes.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			configv1.CloudControllerManagerStatus{}.OpenAPIModelName()},
+			configv1.CloudControllerManagerStatus{}.OpenAPIModelName(), configv1.ExternalPlatformLoadBalancer{}.OpenAPIModelName()},
 	}
 }
 

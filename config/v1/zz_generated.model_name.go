@@ -491,6 +491,11 @@ func (in ExternalIPPolicy) OpenAPIModelName() string {
 }
 
 // OpenAPIModelName returns the OpenAPI model name for this type.
+func (in ExternalPlatformLoadBalancer) OpenAPIModelName() string {
+	return "com.github.openshift.api.config.v1.ExternalPlatformLoadBalancer"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
 func (in ExternalPlatformSpec) OpenAPIModelName() string {
 	return "com.github.openshift.api.config.v1.ExternalPlatformSpec"
 }
